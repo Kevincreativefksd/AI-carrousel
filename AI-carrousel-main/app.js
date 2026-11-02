@@ -98,6 +98,11 @@ Kembalikan HANYA array JSON yang valid.`;
     form: $('form'),
     topic: $('topic'),
     sourceText: $('sourceText'),
+    captionPlatform: $('captionPlatform'),
+    captionPanel: $('captionPanel'),
+    captionMeta: $('captionMeta'),
+    captionOutput: $('captionOutput'),
+    copyCaption: $('copyCaption'),
     apiKey: $('apiKey'),
     toggleKey: $('toggleKey'),
     brand: $('brand'),
@@ -155,7 +160,7 @@ Kembalikan HANYA array JSON yang valid.`;
     el.submit.disabled = on;
     el.spinner.classList.toggle('hidden', !on);
     el.submitLabel.textContent = on ? 'Sedang membuat...' : 'Generate Carousel';
-    [el.topic, el.sourceText, el.apiKey].forEach((i) => (i.disabled = on));
+    [el.topic, el.sourceText, el.captionPlatform, el.apiKey].forEach((i) => (i.disabled = on));
   }
 
   function setStatus(text, pct) {
@@ -293,6 +298,72 @@ Kembalikan HANYA array JSON yang valid.`;
     if (!raw) throw new AppError('Gemini tidak mengembalikan konten. Coba lagi atau ganti topik.');
 
     return normalizeSlides(raw, count);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Agent 1B: Social Caption Writer (Gemini)                             */
+  /* ------------------------------------------------------------------ */
+  async function generateSocialCaption({ topic, sourceText, slides, platform, apiKey, model }) {
+    const url = `${CONFIG.geminiBase}/${encodeURIComponent(model)}:generateContent`;
+    const slideSummary = slides.map((s, i) => {
+      const details = [s.body, ...(s.items || []), ...(s.rows || []).map((r) => `${r.title}: ${r.detail}`)]
+        .filter(Boolean).join(' ');
+      return `Slide ${i + 1}: ${s.headline}. ${details}`;
+    }).join('\n');
+
+    const prompt = `Anda adalah social media copywriter dan editor SEO berbahasa Indonesia.
+Buat SATU caption untuk platform ${platform}, berdasarkan kata kunci/topik dan isi carousel berikut.
+
+KATA KUNCI UTAMA: ${topic}
+BAHAN SUMBER:
+${sourceText || '(Tidak ada bahan sumber tambahan. Jangan membuat klaim faktual atau angka baru.)'}
+
+RINGKASAN ISI CAROUSEL:
+${slideSummary}
+
+KETENTUAN:
+- Awali dengan hook yang kuat, relevan, dan tidak clickbait berlebihan.
+- Masukkan kata kunci utama secara natural pada bagian awal caption.
+- Kembangkan inti pembahasan carousel, jangan sekadar mengulang judul slide.
+- Gunakan paragraf pendek dan mudah dibaca di ponsel.
+- Tutup dengan CTA yang mengundang komentar, diskusi, atau penyimpanan konten.
+- Tambahkan 3–6 hashtag yang relevan di bagian akhir.
+- Sesuaikan gaya dan panjang caption dengan karakter platform ${platform}.
+- Jangan mengarang angka, data, kutipan, sumber, atau fakta yang tidak ada pada bahan/carousel.
+- Jangan menambahkan label seperti "Caption:" atau penjelasan tentang proses penulisan.
+- Hindari emoji berlebihan; maksimal 2 emoji jika terasa sesuai.
+Kembalikan caption saja, tanpa markdown code fence.`;
+
+    let res;
+    try {
+      res = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7 },
+        }),
+      }, CONFIG.geminiTimeout);
+    } catch (err) {
+      if (err.name === 'AbortError') throw new AppError('Pembuatan caption melewati batas waktu. Coba generate ulang.');
+      throw new AppError('Tidak bisa terhubung ke Gemini saat membuat caption.');
+    }
+
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.json())?.error?.message || ''; } catch (_) {}
+      if (res.status === 429) throw new AppError('Kuota Gemini habis saat membuat caption. Coba lagi nanti.');
+      if (res.status === 401 || res.status === 403) throw new AppError('API key tidak memiliki akses untuk membuat caption.');
+      if (res.status === 404) throw new AppError(`Model "${model}" tidak ditemukan saat membuat caption.`);
+      throw new AppError(detail || `Gemini gagal membuat caption (${res.status}).`);
+    }
+
+    const data = await res.json();
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const caption = parts.filter((part) => !part.thought && typeof part.text === 'string')
+      .map((part) => part.text).join('').trim();
+    if (!caption) throw new AppError('Gemini tidak mengembalikan caption. Carousel tetap dapat digunakan.');
+    return caption;
   }
 
   function normalizeSlides(raw, count) {
@@ -699,6 +770,8 @@ Kembalikan HANYA array JSON yang valid.`;
     persist(apiKey);
     revokePdf();
     el.preview.classList.add('hidden');
+    el.captionPanel.classList.add('hidden');
+    el.captionOutput.value = '';
     el.grid.replaceChildren();
     setLoading(true);
 
@@ -707,6 +780,19 @@ Kembalikan HANYA array JSON yang valid.`;
       setStatus('Menyusun isi slide dengan Gemini...', 5);
       const slides = await planContent({ topic, sourceText, apiKey, model, count });
       const total = slides.length;
+
+      // Caption dibuat dari kata kunci dan ringkasan isi carousel.
+      setStatus('Menulis caption media sosial...', 12);
+      let generatedCaption = '';
+      const platform = el.captionPlatform.value || 'Instagram';
+      try {
+        generatedCaption = await generateSocialCaption({
+          topic, sourceText, slides, platform, apiKey, model,
+        });
+      } catch (captionError) {
+        console.warn('Caption tidak berhasil dibuat:', captionError);
+        toast('Carousel akan tetap dibuat, tetapi caption gagal dihasilkan. Anda bisa mencoba generate ulang.', 'warn', 7000);
+      }
 
       const meta = {
         total,
@@ -717,6 +803,14 @@ Kembalikan HANYA array JSON yang valid.`;
       };
 
       el.previewMeta.textContent = `${total} slide, rasio 4:5 (1080 x 1350)`;
+      if (generatedCaption) {
+        el.captionOutput.value = generatedCaption;
+        el.captionMeta.textContent = `Caption ${platform} • dibuat dari kata kunci dan isi carousel`;
+        el.captionPanel.classList.remove('hidden');
+      } else {
+        el.captionOutput.value = '';
+        el.captionPanel.classList.add('hidden');
+      }
       renderSkeletons(slides);
 
       // Agent 2
@@ -797,6 +891,24 @@ Kembalikan HANYA array JSON yang valid.`;
 
   el.downloadBtn.addEventListener('click', () => {
     if (state.pdfUrl) triggerDownload(state.pdfUrl, state.pdfName);
+  });
+
+  el.copyCaption.addEventListener('click', async () => {
+    const caption = el.captionOutput.value.trim();
+    if (!caption) return;
+    try {
+      await navigator.clipboard.writeText(caption);
+      toast('Caption berhasil disalin.', 'success');
+    } catch (_) {
+      el.captionOutput.focus();
+      el.captionOutput.select();
+      try {
+        document.execCommand('copy');
+        toast('Caption berhasil disalin.', 'success');
+      } catch (err) {
+        toast('Tidak bisa menyalin otomatis. Pilih teks caption lalu salin manual.', 'error');
+      }
+    }
   });
 
   el.remember.addEventListener('change', () => {

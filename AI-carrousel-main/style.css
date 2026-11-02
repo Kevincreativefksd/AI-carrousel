@@ -276,3 +276,15 @@ details[open] .chev {
     animation-iteration-count: infinite !important;
   }
 }
+
+
+/* ---------- Caption media sosial ---------- */
+#captionOutput {
+  min-height: 15rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  background: #fff;
+}
+#captionPanel .btn-secondary {
+  white-space: nowrap;
+}

@@ -80,6 +80,20 @@
       </div>
 
       <div>
+        <label for="captionPlatform" class="label">Platform caption</label>
+        <select id="captionPlatform" class="field">
+          <option value="Instagram">Instagram</option>
+          <option value="TikTok">TikTok</option>
+          <option value="Facebook">Facebook</option>
+          <option value="LinkedIn">LinkedIn</option>
+          <option value="X">X (Twitter)</option>
+        </select>
+        <p class="mt-2 text-sm text-muted leading-relaxed">
+          Caption dibuat otomatis dari kata kunci dan isi carousel setelah proses generate selesai.
+        </p>
+      </div>
+
+      <div>
         <label for="apiKey" class="label">Gemini API key</label>
         <div class="relative">
           <input
@@ -171,6 +185,18 @@
         <button id="downloadBtn" type="button" class="btn-secondary hidden">Unduh PDF</button>
       </div>
       <div id="grid" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10"></div>
+
+      <section id="captionPanel" class="hidden mt-12 max-w-2xl">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-display text-xl font-bold tracking-tight">Caption media sosial</h3>
+            <p id="captionMeta" class="mt-1 text-sm text-muted">Dibuat berdasarkan kata kunci dan isi carousel.</p>
+          </div>
+          <button id="copyCaption" type="button" class="btn-secondary">Salin caption</button>
+        </div>
+        <textarea id="captionOutput" class="field mt-4" rows="10" readonly
+          aria-label="Hasil caption media sosial"></textarea>
+      </section>
     </section>
   </main>
 

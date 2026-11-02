@@ -33,6 +33,8 @@ Tidak ada server perantara: seluruh proses berjalan di browser Anda, dan Gemini 
 - **Auto-fit teks** — headline dan isi otomatis mengecil bila terlalu panjang agar tidak keluar dari bingkai.
 - **Pratinjau bertahap** — slide muncul satu per satu saat dirender, disertai progress bar dan status.
 - **Kustomisasi cepat** — nama akun (header), teks footer, nama sumber, warna aksen, dan jumlah slide (5–12).
+- **Caption media sosial otomatis** — Gemini membuat caption dari kata kunci dan isi carousel untuk Instagram, TikTok, Facebook, LinkedIn, atau X.
+- **Salin caption** — hasil caption dapat disalin dengan satu klik dan diedit sebelum dipublikasikan.
 - **Unduh PDF** — otomatis setelah selesai (bisa dimatikan) atau manual lewat tombol **Unduh PDF**.
 - **Ingat preferensi** — pengaturan disimpan di `localStorage`; API key hanya disimpan bila Anda mencentang opsi "Ingat API key".
 - **Pesan error yang jelas** — API key tidak valid, model tidak ditemukan, kuota habis, filter keamanan, timeout, dan offline ditangani dengan pesan berbahasa Indonesia.
@@ -41,13 +43,14 @@ Tidak ada server perantara: seluruh proses berjalan di browser Anda, dan Gemini 
 
 ## Cara Kerja
 
-`app.js` menjalankan tiga tahap (agent) berurutan:
+`app.js` menjalankan empat tahap (agent) berurutan:
 
 | Tahap | Nama | Teknologi | Tugas |
 | --- | --- | --- | --- |
 | 1 | **Content Planner** | Gemini API | Menyusun JSON slide berstruktur sesuai skema (`responseSchema`), termasuk layout per slide |
-| 2 | **Slide Designer** | Canvas 2D | Merender tiap slide 1080 × 1350 px dengan template tipografi dan warna aksen |
-| 3 | **PDF Compiler** | jsPDF | Menggabungkan gambar JPEG tiap slide menjadi satu PDF (portrait, ukuran sama) |
+| 2 | **Social Caption Writer** | Gemini API | Membuat caption sesuai platform berdasarkan kata kunci dan isi slide |
+| 3 | **Slide Designer** | Canvas 2D | Merender tiap slide 1080 × 1350 px dengan template tipografi dan warna aksen |
+| 4 | **PDF Compiler** | jsPDF | Menggabungkan gambar JPEG tiap slide menjadi satu PDF (portrait, ukuran sama) |
 
 Hasil tiap slide dirender ke `<canvas>`, diekspor sebagai JPEG kualitas 0.93, lalu ditempatkan penuh di setiap halaman PDF. Nama berkas dibuat dari slug topik, misalnya `Carousel_Wall_Street_menguji_modal_AI.pdf`.
 
@@ -101,9 +104,11 @@ Key dipakai sebagai header `x-goog-api-key` pada permintaan ke `generativelangua
 1. **Topik carousel** — wajib, minimal 3 karakter. Contoh: `Wall Street menguji balik modal investasi AI`.
 2. **Bahan sumber** *(opsional)* — tempel artikel atau data. Bila diisi, model dilarang menambah fakta dari luar bahan.
 3. **Gemini API key** — wajib. Gunakan tombol **Tampilkan/Sembunyikan** untuk memeriksa key.
-4. Klik **Generate Carousel**.
-5. Tunggu proses: penyusunan isi → desain slide per slide → kompilasi PDF.
-6. PDF otomatis terunduh (jika opsi aktif) atau klik **Unduh PDF** pada bagian pratinjau.
+4. Pilih platform pada bagian **Platform caption**.
+5. Klik **Generate Carousel**.
+6. Tunggu proses: penyusunan isi → pembuatan caption → desain slide per slide → kompilasi PDF.
+7. Caption tampil di bawah pratinjau. Klik **Salin caption** untuk menyalinnya.
+8. PDF otomatis terunduh (jika opsi aktif) atau klik **Unduh PDF** pada bagian pratinjau.
 
 ---
 
@@ -171,6 +176,7 @@ Slide pertama selalu `cover` dan slide terakhir selalu `closing`. Layout yang ti
 - Jumlah slide 5–12; kurang dari 3 slide valid akan dianggap gagal.
 - Hanya `**bold**` yang dikenali sebagai format sorotan; markdown lain tidak didukung.
 - Tanpa sumber, model diinstruksikan untuk tidak mengarang angka, tanggal, kutipan, atau nama pihak.
+- Caption memerlukan satu permintaan Gemini tambahan setelah konten carousel berhasil dibuat.
 - Nada netral dan edukatif, tanpa saran investasi, emoji, atau hashtag.
 - Teks yang sangat panjang akan diperkecil bertahap; tetap ada batas sebelum terpotong.
 
