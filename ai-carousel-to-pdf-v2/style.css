@@ -1,0 +1,278 @@
+/* Gaya kustom. Tailwind (CDN) menangani tata letak; berkas ini untuk komponen berulang. */
+
+:root {
+  color-scheme: light;
+  --ink: #16161a;
+  --muted: #7c7c86;
+  --line: #e6e6ea;
+  --accent: #3b4bf5;
+  --radius: 12px;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Form ---------- */
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.field {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field::placeholder {
+  color: #b3b3bb;
+}
+.field:hover {
+  border-color: #d3d3d9;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(59, 75, 245, 0.12);
+}
+.field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.925rem;
+  cursor: pointer;
+}
+.check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
+textarea.field {
+  min-height: 7.5rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.color {
+  width: 3.25rem;
+  height: 2.75rem;
+  padding: 3px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .chev {
+  transform: rotate(90deg);
+}
+.chev {
+  transition: transform 0.15s ease;
+}
+
+/* ---------- Tombol ---------- */
+.btn-primary {
+  display: inline-flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.25rem;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  background: var(--ink);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #2a2a31;
+}
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.btn-primary:disabled {
+  cursor: progress;
+  background: #3a3a42;
+}
+
+.btn-secondary {
+  padding: 0.65rem 1.1rem;
+  font: inherit;
+  font-size: 0.925rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.btn-secondary:hover {
+  border-color: var(--ink);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Progres ---------- */
+.bar {
+  transition: width 0.4s ease;
+}
+
+/* ---------- Kartu pratinjau ---------- */
+.slide-frame {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: #efeff2;
+}
+.slide-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.skeleton {
+  display: flex;
+  align-items: flex-end;
+  height: 100%;
+  padding: 1.25rem;
+  background: linear-gradient(100deg, #ececf0 30%, #f6f6f8 50%, #ececf0 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+.skeleton p {
+  font-family: Arial, "Liberation Sans", Helvetica, sans-serif;
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: #9b9ba5;
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* ---------- Toast ---------- */
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  width: min(92vw, 420px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #fff;
+  background: var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 30px rgba(22, 22, 26, 0.18);
+  pointer-events: auto;
+  cursor: pointer;
+  animation: toast-in 0.2s ease-out;
+}
+.toast-out {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.toast-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: #9aa0ff;
+}
+.toast-error .toast-dot {
+  background: #ff6b6b;
+}
+.toast-success .toast-dot {
+  background: #4ade80;
+}
+.toast-warn .toast-dot {
+  background: #fbbf24;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .spinner {
+    animation: spin 1.6s linear infinite !important;
+    animation-duration: 1.6s !important;
+    animation-iteration-count: infinite !important;
+  }
+}

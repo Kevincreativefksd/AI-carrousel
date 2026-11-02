@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carousel to PDF</title>
+  <meta name="description" content="Ubah topik atau artikel menjadi carousel PDF editorial 4:5. Berjalan sepenuhnya di browser." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Instrument+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['"Bricolage Grotesque"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            sans: ['"Instrument Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            ink: '#16161A',
+            muted: '#7C7C86',
+            line: '#E6E6EA',
+            paper: '#FAFAF9',
+            accent: '#3B4BF5',
+          },
+        },
+      },
+    };
+  </script>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body class="bg-paper text-ink font-sans antialiased min-h-screen flex flex-col">
+  <main class="flex-1 mx-auto w-full max-w-4xl px-5 sm:px-8 py-16 sm:py-24">
+    <header class="mx-auto max-w-xl text-center">
+      <h1 class="font-display text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.05]">
+        Dari satu topik jadi carousel PDF.
+      </h1>
+      <p class="mt-5 text-base sm:text-lg text-muted leading-relaxed">
+        AI menyusun isi slide, lalu dirangkai menjadi carousel editorial 4:5 siap unggah.
+      </p>
+    </header>
+
+    <form id="form" class="mx-auto mt-12 sm:mt-14 max-w-lg space-y-6" novalidate autocomplete="off">
+      <div>
+        <label for="topic" class="label">Topik carousel</label>
+        <input
+          id="topic"
+          name="topic"
+          type="text"
+          class="field"
+          placeholder="mis. Wall Street menguji balik modal investasi AI"
+          maxlength="200"
+          required
+        />
+      </div>
+
+      <div>
+        <label for="sourceText" class="label">Bahan sumber <span class="text-muted font-normal">(opsional)</span></label>
+        <textarea
+          id="sourceText"
+          name="sourceText"
+          class="field"
+          placeholder="Tempel artikel atau data di sini, atau kosongkan."
+          maxlength="12000"
+        ></textarea>
+        <p class="mt-2 text-sm text-muted leading-relaxed">
+          Boleh dikosongkan. Jika diisi, angka dan fakta hanya diambil dari bahan ini. Jika kosong, isi dibuat umum tanpa angka spesifik.
+        </p>
+      </div>
+
+      <div>
+        <label for="apiKey" class="label">Gemini API key</label>
+        <div class="relative">
+          <input
+            id="apiKey"
+            name="apiKey"
+            type="password"
+            class="field pr-24"
+            placeholder="AIza..."
+            spellcheck="false"
+            autocapitalize="off"
+            required
+          />
+          <button type="button" id="toggleKey" class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm text-muted hover:text-ink rounded-lg">
+            Tampilkan
+          </button>
+        </div>
+        <p class="mt-2 text-sm text-muted leading-relaxed">
+          Key dikirim langsung dari browser ke Google dan tidak disimpan di mana pun.
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="underline underline-offset-4 hover:text-ink">Buat key gratis</a>.
+        </p>
+      </div>
+
+      <details class="group">
+        <summary class="cursor-pointer select-none text-sm text-muted hover:text-ink inline-flex items-center gap-2">
+          <svg class="chev h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 5l5 5-5 5" /></svg>
+          Pengaturan lanjutan
+        </summary>
+        <div class="mt-5 space-y-5 pl-6">
+          <div>
+            <label for="brand" class="label">Nama akun (header slide)</label>
+            <input id="brand" type="text" class="field" value="Zona Ekonomi" maxlength="40" />
+          </div>
+          <div>
+            <label for="footer" class="label">Teks footer</label>
+            <input id="footer" type="text" class="field" value="Ruang Literasi Ekonomi" maxlength="60" />
+          </div>
+          <div>
+            <label for="sourceName" class="label">Nama sumber <span class="text-muted font-normal">(opsional, slide terakhir)</span></label>
+            <input id="sourceName" type="text" class="field" placeholder="mis. Reuters, Bloomberg" maxlength="120" />
+            <p class="mt-2 text-sm text-muted">Jika kosong, blok "Sumber" tidak ditampilkan di slide terakhir.</p>
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label for="count" class="label">Jumlah slide</label>
+              <input id="count" type="number" class="field" min="5" max="12" value="11" />
+            </div>
+            <div>
+              <label for="accent" class="label">Warna aksen</label>
+              <input id="accent" type="color" class="color" value="#C62828" />
+            </div>
+          </div>
+          <div>
+            <label for="model" class="label">Model Gemini</label>
+            <input id="model" type="text" class="field" value="gemini-3.5-flash-lite" spellcheck="false" />
+          </div>
+          <label class="check">
+            <input id="autoDownload" type="checkbox" checked />
+            <span>Unduh PDF otomatis setelah selesai</span>
+          </label>
+          <label class="check">
+            <input id="remember" type="checkbox" />
+            <span>Ingat API key di browser ini</span>
+          </label>
+        </div>
+      </details>
+
+      <button id="submit" type="submit" class="btn-primary">
+        <span id="spinner" class="spinner hidden" aria-hidden="true"></span>
+        <span id="submitLabel">Generate Carousel</span>
+      </button>
+    </form>
+
+    <section id="progress" class="hidden mx-auto mt-8 max-w-lg" aria-live="polite">
+      <div class="flex items-center justify-between text-sm">
+        <p id="statusText" class="text-ink"></p>
+        <p id="statusPct" class="text-muted tabular-nums"></p>
+      </div>
+      <div class="mt-3 h-1 w-full rounded-full bg-line overflow-hidden">
+        <div id="bar" class="h-full w-0 bg-accent rounded-full bar"></div>
+      </div>
+    </section>
+
+    <section id="preview" class="hidden mt-16 sm:mt-20">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h2 class="font-display text-2xl font-bold tracking-tight">Pratinjau</h2>
+          <p id="previewMeta" class="mt-1 text-sm text-muted"></p>
+        </div>
+        <button id="downloadBtn" type="button" class="btn-secondary hidden">Unduh PDF</button>
+      </div>
+      <div id="grid" class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10"></div>
+    </section>
+  </main>
+
+  <footer class="px-5 py-10 text-center text-sm text-muted">
+    Berjalan sepenuhnya di browser Anda. Tidak ada server perantara.
+  </footer>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+</body>
+</html>
